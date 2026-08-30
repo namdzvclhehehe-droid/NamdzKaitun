@@ -1,0 +1,158 @@
+-- [[ NAMDZ HUB KAITUN - MAXIMUM HYBRID WORKING VERSION ]] --
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+if CoreGui:FindFirstChild("Status_UI") then CoreGui.Status_UI:Destroy() end
+
+local IsScriptRunning = true
+local MaxLevel = 2800
+
+local Config = {
+    FastAttack = true,
+    BringMob = true,
+    AutoStats = true,
+    SaveFPS = true,
+    AutoHaki = true,
+    AutoBuyStyle = true,
+    RemoteQuest = true -- Bật nhận nhiệm vụ từ xa bypass NPC
+}
+
+if Config.SaveFPS then
+    setfpscap(30)
+    game:GetService("Lighting").GlobalShadows = false
+end
+
+local Remotes = ReplicatedStorage:WaitForChild("Remotes", 15)
+local CommF = Remotes and Remotes:WaitForChild("CommF_", 15)
+
+-- ==========================================
+-- KHỞI TẠO UI BẢN 36 (BẢNG ĐEN VIỀN VÀNG)
+-- ==========================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Status_UI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 420, 0, 70)
+MainFrame.Position = UDim2.new(0.5, 0, 0.07, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.25
+MainFrame.BorderSizePixel = 3
+MainFrame.BorderColor3 = Color3.fromRGB(255, 220, 70)
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 6)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(255, 230, 120)
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -10, 0.5, 0)
+TitleLabel.Position = UDim2.new(0.5, 0, 0, 5)
+TitleLabel.AnchorPoint = Vector2.new(0.5, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "namdz Hub by nam | Ultra Core v10/10"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 230, 120)
+TitleLabel.TextSize = 20
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
+TitleLabel.Parent = MainFrame
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -10, 0.5, 0)
+StatusLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+StatusLabel.AnchorPoint = Vector2.new(0.5, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Đang kết nối Core..."
+StatusLabel.TextColor3 = Color3.fromRGB(255, 230, 120)
+StatusLabel.TextSize = 16
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+StatusLabel.Parent = MainFrame
+
+task.spawn(function()
+	while task.wait() do
+		local t1 = TweenService:Create(UIStroke, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(255, 255, 180)})
+		local t2 = TweenService:Create(TitleLabel, TweenInfo.new(1.2), {TextColor3 = Color3.fromRGB(255, 255, 180)})
+		local t3 = TweenService:Create(StatusLabel, TweenInfo.new(1.2), {TextColor3 = Color3.fromRGB(255, 255, 180)})
+		t1:Play() t2:Play() t3:Play() t1.Completed:Wait()
+		
+		local t4 = TweenService:Create(UIStroke, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(255, 200, 60)})
+		local t5 = TweenService:Create(TitleLabel, TweenInfo.new(1.2), {TextColor3 = Color3.fromRGB(255, 200, 60)})
+		local t6 = TweenService:Create(StatusLabel, TweenInfo.new(1.2), {TextColor3 = Color3.fromRGB(255, 200, 60)})
+		t4:Play() t5:Play() t6:Play() t4.Completed:Wait()
+	end
+end)
+
+local function UpdateUIStatus(text)
+    StatusLabel.Text = "Status: " .. tostring(text)
+end
+
+-- ==========================================
+-- ĐỊNH NGHĨA HÀM TỰ LÔI VŨ KHÍ RA TAY
+-- ==========================================
+local function AutoEquipMelee()
+    local char = LocalPlayer.Character
+    if not char then return end
+    if not char:FindFirstChildOfClass("Tool") then
+        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool.ToolTip == "Melee" or tool:FindFirstChild("Combat") or tool.Name:find("Leg") or tool.Name:find("Style")) then
+                tool.Parent = char
+                break
+            end
+        end
+    end
+end
+
+-- ==========================================
+-- BẢNG SỬA LỖI TỌA ĐỘ PHÂN TÍCH LEVEL (ĐÃ FIX KHÔNG BỊ THIẾU)
+-- ==========================================
+local function GetQuestData(level)
+    local pId = game.PlaceId
+    local isBuddha = false
+    pcall(function()
+        if LocalPlayer.Data.DevilFruit.Value == "Buddha-Buddha" then isBuddha = true end
+    end)
+
+    if pId == 2753915549 then
+        if level < 10 then return {Mob = "Bandit", QuestName = "BanditQuest1", QuestID = 1, Group = "Bandits", PosNPC = CFrame.new(1059.3, 15.4, 1550.4)}
+        elseif level >= 10 and level < 30 then return {Mob = "Monkey", QuestName = "JungleQuest", QuestID = 1, Group = "Monkeys", PosNPC = CFrame.new(-1598.9, 36.9, 148.7)}
+        elseif level >= 30 and level < 35 then return {Mob = "Gorilla", QuestName = "JungleQuest", QuestID = 2, Group = "Gorillas", PosNPC = CFrame.new(-1598.9, 36.9, 148.7)}
+        elseif level >= 35 and level < 45 then return {Mob = "Pirate", QuestName = "BuggyQuest1", QuestID = 1, Group = "Pirates", PosNPC = CFrame.new(-1139.5, 4.7, 3830.3)}
+        elseif level >= 45 and level < 60 then return {Mob = "Brute", QuestName = "BuggyQuest1", QuestID = 2, Group = "Brutes", PosNPC = CFrame.new(-1139.5, 4.7, 3830.3)}
+        elseif level >= 60 and level < 75 then return {Mob = "Desert Bandit", QuestName = "DesertQuest", QuestID = 1, Group = "Desert Bandits", PosNPC = CFrame.new(894.4, 5.1, 4392.4)}
+        elseif level >= 75 and level < 90 then return {Mob = "Desert Officer", QuestName = "DesertQuest", QuestID = 2, Group = "Desert Officers", PosNPC = CFrame.new(894.4, 5.1, 4392.4)}
+        elseif level >= 90 and level < 105 then return {Mob = "Snow Bandit", QuestName = "SnowQuest", QuestID = 1, Group = "Snow Bandits", PosNPC = CFrame.new(1389.7, 86.6, -1298.9)}
+        elseif level >= 105 and level < 120 then return {Mob = "Snowman", QuestName = "SnowQuest", QuestID = 2, Group = "Snowmen", PosNPC = CFrame.new(1389.7, 86.6, -1298.9)}
+        elseif level >= 120 and level < 150 then return {Mob = "Chief Petty Officer", QuestName = "MarineQuest2", QuestID = 1, Group = "Chief Petty Officers", PosNPC = CFrame.new(-5039.5, 27.3, 4324.6)}
+        elseif level >= 150 and level < 175 then return {Mob = "Sky Bandit", QuestName = "SkyQuest", QuestID = 1, Group = "Sky Bandits", PosNPC = CFrame.new(-4839.5, 716.3, -2619.4)}
+        elseif level >= 175 and level < 190 then return {Mob = "Dark Master", QuestName = "SkyQuest", QuestID = 2, Group = "Dark Masters", PosNPC = CFrame.new(-4839.5, 716.3, -2619.4)}
+        elseif level >= 190 and level < 210 then return {Mob = "Prisoner", QuestName = "PrisonerQuest", QuestID = 1, Group = "Prisoners", PosNPC = CFrame.new(5308.9, 1.6, 475.1)}
+        elseif level >= 210 and level < 250 then return {Mob = "Dangerous Prisoner", QuestName = "PrisonerQuest", QuestID = 2, Group = "Dangerous Prisoners", PosNPC = CFrame.new(5308.9, 1.6, 475.1)}
+        elseif level >= 250 and level < 300 then return {Mob = "Toga Warrior", QuestName = "ColosseumQuest", QuestID = 1, Group = "Toga Warriors", PosNPC = CFrame.new(-1576.1, 7.3, -2983.3)}
+        elseif level >= 300 and level < 330 then return {Mob = "Military Soldier", QuestName = "MagmaQuest", QuestID = 1, Group = "Military Soldiers", PosNPC = CFrame.new(-5316.5, 12.2, 8517.2)}
+        elseif level >= 330 and level < 375 then return {Mob = "Military Spy", QuestName = "MagmaQuest", QuestID = 2, Group = "Military Spies", PosNPC = CFrame.new(-5316.5, 12.2, 8517.2)}
+        elseif level >= 375 and level < 400 then return {Mob = "Fishman Warrior", QuestName = "FishmanQuest", QuestID = 1, Group = "Fishman Warriors", PosNPC = CFrame.new(61122.5, 18.4, 1568.1)}
+        elseif level >= 400 and level < 450 then return {Mob = "Fishman Commando", QuestName = "FishmanQuest", QuestID = 2, Group = "Fishman Commandos", PosNPC = CFrame.new(61122.5, 18.4, 1568.1)}
+        elseif level >= 450 and level < 475 then return {Mob = "God's Guard", QuestName = "SkyExp1Quest", QuestID = 1, Group = "God's Guards", PosNPC = CFrame.new(-4721.7, 845.2, -1954.2)}
+        elseif level >= 475 and level < 525 then return {Mob = "Shanda", QuestName = "SkyExp1Quest", QuestID = 2, Group = "Shandas", PosNPC = CFrame.new(-7859.1, 5544.1, -381.4)}
+        elseif level >= 525 and level < 550 then return {Mob = "Royal Squad", QuestName = "SkyExp2Quest", QuestID = 1, Group = "Royal Squads", PosNPC = CFrame.new(-7906.8, 5634.6, -1411.9)}
+        elseif level >= 550 and level < 625 then return {Mob = "Royal Soldier", QuestName = "SkyExp2Quest", QuestID = 2, Group = "Royal Soldiers", PosNPC = CFrame.new(-7906.8, 5634.6, -1411.9)}
+        elseif level >= 625 and level < 650 then return {Mob = "Galley Pirate", QuestName = "FountainQuest", QuestID = 1, Group = "Galley Pirates", PosNPC = CFrame.new(5259.8, 37.3, 4050.0)}
+        else return {Mob = "Galley Captain", QuestName = "FountainQuest", QuestID = 2, Group = "Galley Captains", PosNPC = CFrame.new(5259.8, 37.3, 4050.0)} end
+    elseif pId == 4442272183 then
+        if level >= 700 and level < 725 then return {Mob = "Raider", QuestName = "Area1Quest", QuestID = 1, Group = "Raiders", PosNPC = CFrame.new(-429.5, 71.7, 1836.1)}
+        elseif level >= 725 and level < (isBuddha and 800 or 775) then return {Mob = "Mercenary", QuestName = "Area1Quest", QuestID = 2, Group = "Mercenaries", PosNPC = CFrame.new(-429.5, 71.7, 1836.1)}
+elseif level >= (isBuddha and 800 or 775) and level < 800 then return {Mob = "Swan Pirate", QuestName = "Area2Quest", QuestID = 1, Group = "Swan Pirates", PosNPC = CFrame.new(638.4, 71.7, 918.2)}elseif level >= 800 and level < 875 then return {Mob = "Factory Staff", QuestName = "Area2Quest", QuestID = 2, Group = "Factory Staffs", PosNPC = CFrame.new(638.4, 71.7, 918.2)}elseif level >= 875 and level < 900 then return {Mob = "Marine Lieutenant", QuestName = "MarineQuest3", QuestID = 1, Group = "Marine Lieutenants", PosNPC = CFrame.new(-2440.7, 71.7, -3216.0)}elseif level >= 900 and level < 950 then return {Mob = "Marine Captain", QuestName = "MarineQuest3", QuestID = 2, Group = "Marine Captains", PosNPC = CFrame.new(-2440.7, 71.7, -3216.0)}elseif level >= 950 and level < 975 then return {Mob = "Zombie", QuestName = "ZombieQuest", QuestID = 1, Group = "Zombies", PosNPC = CFrame.new(-5497.0, 47.5, -795.2)}elseif level >= 975 and level < 1000 then return {Mob = "Vampire", QuestName = "ZombieQuest", QuestID = 2, Group = "Vampires", PosNPC = CFrame.new(-5497.0, 47.5, -795.2)}elseif level >= 1000 and level < 1050 then return {Mob = "Snow Trooper", QuestName = "SnowMountainQuest", QuestID = 1, Group = "Snow Troopers", PosNPC = CFrame.new(609.8, 400.1, -5372.2)}elseif level >= 1050 and level < 1100 then return {Mob = "Winter Warrior", QuestName = "SnowMountainQuest", QuestID = 2, Group = "Winter Warriors", PosNPC = CFrame.new(609.8, 400.1, -5372.2)}elseif level >= 1100 and level < 1125 then return {Mob = "Lab Subordinate", QuestName = "IceSideQuest", QuestID = 1, Group = "Lab Subordinates", PosNPC = CFrame.new(-6064.0, 15.2, -4902.9)}elseif level >= 1125 and level < 1175 then return {Mob = "Horned Warrior", QuestName = "IceSideQuest", QuestID = 2, Group = "Horned Warriors", PosNPC = CFrame.new(-6064.0, 15.2, -4902.9)}elseif level >= 1175 and level < 1200 then return {Mob = "Magma Ninja", QuestName = "FireSideQuest", QuestID = 1, Group = "Magma Ninjas", PosNPC = CFrame.new(-5428.0, 15.0, -5299.4)}elseif level >= 1200 and level < 1250 then return {Mob = "Lava Pirate", QuestName = "FireSideQuest", QuestID = 2, Group = "Lava Pirates", PosNPC = CFrame.new(-5428.0, 15.0, -5299.4)}elseif level >= 1250 and level < 1275 then return {Mob = "Ship Deckhand", QuestName = "ShipQuest1", QuestID = 1, Group = "Ship Deckhands", PosNPC = CFrame.new(1037.8, 125.0, 32911.6)}elseif level >= 1275 and level < 1300 then return {Mob = "Ship Engineer", QuestName = "ShipQuest1", QuestID = 2, Group = "Ship Engineers", PosNPC = CFrame.new(1037.8, 125.0, 32911.6)}elseif level >= 1300 and level < 1325 then return {Mob = "Ship Steward", QuestName = "ShipQuest2", QuestID = 1, Group = "Ship Stewards", PosNPC = CFrame.new(968.8, 125.0, 33244.1)}elseif level >= 1325 and level < 1350 then return {Mob = "Ship Officer", QuestName = "ShipQuest2", QuestID = 2, Group = "Ship Officers", PosNPC = CFrame.new(968.8, 125.0, 33244.1)}elseif level >= 1350 and level < 1374 then return {Mob = "Arctic Warrior", QuestName = "FrostQuest", QuestID = 1, Group = "Arctic Warriors", PosNPC = CFrame.new(5667.6, 26.7, -6486.0)}elseif level >= 1375 and level < 1425 then return {Mob = "Snow Lurker", QuestName = "FrostQuest", QuestID = 2, Group = "Snow Lurkers", PosNPC = CFrame.new(5667.6, 26.7, -6486.0)}elseif level >= 1425 and level < 1450 then return {Mob = "Sea Soldier", QuestName = "ForgottenQuest", QuestID = 1, Group = "Sea Soldiers", PosNPC = CFrame.new(-3054.4, 235.5, -10142.8)}else return {Mob = "Water Fighter", QuestName = "ForgottenQuest", QuestID = 2, Group = "Water Fighters", PosNPC = CFrame.new(-3054.4, 235.5, -10142.8)} endelsereturn {Mob = "Pirate Millionaire", QuestName = "PiratePortQuest", QuestID = 1, Group = "Pirate Millionaires", PosNPC = CFrame.new(-290.0, 42.9, 5581.5)}endend-- ==========================================-- ENGINE DI CHUYỂN NO-CLIP MƯỢT MÀ-- ==========================================local currentTweenlocal function TweenTo(cframeTarget)local char = LocalPlayer.Characterif not char or not char:FindFirstChild("HumanoidRootPart") then return endfor _, part in pairs(char:GetDescendants()) doif part:IsA("BasePart") then part.CanCollide = false endendlocal hrp = char.HumanoidRootPartlocal dist = (hrp.Position - cframeTarget.Position).Magnitudelocal speed = 320if currentTween then currentTween:Cancel() endcurrentTween = TweenService:Create(hrp, TweenInfo.new(dist / speed, Enum.EasingStyle.Linear), {CFrame = cframeTarget})currentTween:Play()return currentTweenend-- ==========================================-- BYPASS FAST ATTACK TRỰC TIẾP-- ==========================================local function PacketAttack()pcall(function()local char = LocalPlayer.Characterif not char then return endAutoEquipMelee() -- Gọi đúng hàm kiểm tra vũ khí đã định nghĩalocal tool = char:FindFirstChildOfClass("Tool")if tool and tool:FindFirstChild("RightClickRemote") thentool.RightClickRemote:FireServer()endlocal netRE = ReplicatedStorage:FindFirstChild("RigControllerEvent") or (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Validator"))if netRE then netRE:FireServer("weaponClick") endend)endtask.spawn(function()while true doRunService.Heartbeat:Wait()if IsScriptRunning and Config.FastAttack thenlocal hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")if hrp thenfor _, enemy in pairs(workspace.Enemies:GetChildren()) doif enemy:FindFirstChild("HumanoidRootPart") and (enemy.HumanoidRootPart.Position - hrp.Position).Magnitude <= 65 thenPacketAttack()breakendendendendendend)-- ==========================================-- AUTO GOM QUÁI DIỆN RỘNG (BRING MOB)-- ==========================================local function BringMobs(mobName, targetCFrame)if not Config.BringMob then return endpcall(function()for _, enemy in pairs(workspace.Enemies:GetChildren()) doif enemy.Name == mobName and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 thenif (enemy.HumanoidRootPart.Position - targetCFrame.Position).Magnitude < 300 thenenemy.HumanoidRootPart.CanCollide = falseenemy.HumanoidRootPart.CFrame = targetCFrameif enemy.Humanoid:FindFirstChild("Animator") then enemy.Humanoid.Animator:Destroy() endendendendend)end-- ==========================================-- VÒNG LẶP TREO MÁY CHÍNH VÀ NHẬN Q TỪ XA-- ==========================================local function StartKaitun()if CommF then pcall(function() CommF:InvokeServer("SetTeam", "Pirates") end) endtask.spawn(function()while task.wait(0.3) doif not IsScriptRunning then break endpcall(function()local level = LocalPlayer.Data.Level.Valuelocal questData = GetQuestData(level)-- Tự động cộng chỉ số sức mạnhif Config.AutoStats and LocalPlayer.Data.StatsPoints.Value > 0 thenlocal pts = LocalPlayer.Data.StatsPoints.Valueif CommF thenCommF:InvokeServer("AddPoint", "Melee", math.floor(pts / 2))CommF:InvokeServer("AddPoint", "Defense", math.floor(pts / 2))endendlocal hasQuest = LocalPlayer.PlayerGui.Main.Quest.Visibleif not hasQuest thenif Config.RemoteQuest and CommF thenUpdateUIStatus("Bypass từ xa: Nhận NV " .. questData.Mob)CommF:InvokeServer("StartQuest", questData.QuestName, questData.QuestID)elseUpdateUIStatus("Đang di chuyển nhận NV: " .. questData.Mob)if questData.PosNPC thenTweenTo(questData.PosNPC * CFrame.new(0, 0, 3))if (LocalPlayer.Character.HumanoidRootPart.Position - questData.PosNPC.Position).Magnitude < 15 thenif CommF then CommF:InvokeServer("StartQuest", questData.QuestName, questData.QuestID) endendendendelseUpdateUIStatus("Core Đấm Lan: " .. questData.Mob .. " [" .. level .. "]")local targetMob = nilfor _, enemy in pairs(workspace.Enemies:GetChildren()) doif enemy.Name == questData.Mob and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 thentargetMob = enemybreakendendif not targetMob thenlocal spawnPoint = workspace.EnemySpawns:FindFirstChild(questData.Mob) or workspace.EnemySpawns:FindFirstChild(questData.Group)if spawnPoint then TweenTo(spawnPoint.CFrame * CFrame.new(0, 20, 0)) endelse-- Giữ khoảng cách bay an toàn 12m trên đầu quái né chiêulocal farmCFrame = targetMob.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)TweenTo(farmCFrame)BringMobs(questData.Mob, targetMob.HumanoidRootPart.CFrame)endendend)endend)endtask.spawn(function()repeat task.wait(1) until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")StartKaitun()end)
